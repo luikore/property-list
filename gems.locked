@@ -1,0 +1,41 @@
+PATH
+  remote: .
+  specs:
+    property-list (1.0)
+
+GEM
+  remote: https://rubygems.org/
+  specs:
+    coderay (1.1.1)
+    docile (1.1.5)
+    hoe (3.16.1)
+      rake (>= 0.8, < 13.0)
+    json (2.1.0)
+    method_source (0.8.2)
+    pry (0.10.4)
+      coderay (~> 1.1.0)
+      method_source (~> 0.8.1)
+      slop (~> 3.4)
+    rake (12.0.0)
+    simplecov (0.14.1)
+      docile (~> 1.1.0)
+      json (>= 1.8, < 3)
+      simplecov-html (~> 0.10.0)
+    simplecov-html (0.10.2)
+    slop (3.6.0)
+    test-unit (1.2.3)
+      hoe (>= 1.5.1)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  bundler (~> 1.15.4)
+  property-list!
+  pry (~> 0.10.4)
+  rake (~> 12.0.0)
+  simplecov (~> 0.14.1)
+  test-unit (~> 1.2.3)
+
+BUNDLED WITH
+   1.15.4
