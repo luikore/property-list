@@ -23,6 +23,23 @@ Generate a plist file data
     PropertyList.dump_binary obj
     PropertyList.dump_ascii obj
 
+XML formatting options for `PropertyList.dump_xml object, options`
+
+- `segment:` whether wrap the xml output is a segment or wrapped with `<?xml>` and `<plist>` tags. default is `false`.
+- `xml_version:` you can also specify `"1.1"` for https://www.w3.org/TR/xml11/, default is `"1.0"`, no effect if `:segment` is set to `true`.
+- `indent_unit:` the indent unit, default value is `"\t"`, set to `nil` or `''` if you don't need indent.
+- `initial_indent:` initial indent space, default is `''`, the indentation per line equals to `initial_indent + indent * current_indent_level`.
+- `base64_width:` the width of characters per line when serializing data with Base64, default value is `68`, must be multiple of `4`.
+- `base64_indent:` whether indent the Base64 encoded data, you can use `false` for compatibility to generate same output for other frameworks, default value is `true`.
+
+ASCII formatting options for `PropertyList.dump_ascii object, options`
+
+- `indent_unit:` the indent unit, default value is `"\t"`, set to `''` if you don't need indent
+- `initial_indent:` initial indent space, default is `''`, the indentation per line equals to `initial_indent + indent * current_indent_level`
+- `wrap:` wrap the top level output with `{...}` when obj is a Hash, default is `true`.
+- `encoding_comment:` add encoding comment `// !$*UTF8*$!` on top of file, default is `false`
+- `sort_keys:` sort dict keys, default is `true`
+
 ## Data type mapping
 
 Data type mapping in `PropertyList.load`:
