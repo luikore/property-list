@@ -1,9 +1,10 @@
 module PropertyList
+  # Parse XML plist into a Ruby object
   def self.load_xml xml
     XmlParser.new(xml).parse
   end
 
-  class XmlParser
+  class XmlParser #:nodoc:
     def initialize src
       @lexer = StringScanner.new src
     end

@@ -6,8 +6,10 @@ Gem::Specification.new do |spec|
   spec.authors       = ["Luikore"]
   spec.email         = 'no@email'
 
-  spec.summary       = "Property List (plist) library with all formats support"
-  spec.description   = "Full-featured property list library. Supports XML/ASCII/Binary plist generate and parse. Finely-tuned formatting options. No line-ending bug like plist gem. Cross platform. No dependency."
+  spec.summary       = "Property List (plist, propertylist) library with all formats support"
+  spec.description   = "Fully featured propertylist library.
+Can load and dump XML/ASCII/Binary plists and offer fine-grained formatting options.
+Cross platform, clean code, performance tuned, no dependency."
   spec.homepage      = "https://github.com/luikore/property-list"
   spec.license       = "BSD-3-Clause"
 

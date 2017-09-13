@@ -1,18 +1,17 @@
 module PropertyList
-  # options can be:
+  # Generate ASCII (Plain) plist.
   #
-  # [:indent_unit] the indent unit, default value is <code>"\t"</code>, set to <code>''</code> if you don't need indent
+  # Options:
   #
-  # [:initial_indent] initial indent space, default is <code>''</code>, the indentation per line equals to <code>initial_indent + indent * current_indent_level</code>
+  # - `indent_unit:` the indent unit, default value is `"\t"`, set to `''` if you don't need indent.
+  # - `initial_indent:` initial indent space, default is `''`, the indentation per line equals to `initial_indent + indent * current_indent_level`.
+  # - `wrap:` wrap the top level output with `{...}` when obj is a Hash, default is `true`.
+  # - `encoding_comment:` add encoding comment `// !$*UTF8*$!` on top of file, default is `false`.
+  # - `sort_keys:` sort dict keys, default is `true`.
+  # - `gnu_extension` whether allow GNUStep extensions for ASCII plist to support serializing more types, default is `true`.
   #
-  # [:wrap] wrap the top level output with '{}' when obj is a Hash, default is true.
-  #
-  # [:encoding_comment] add encoding comment '!$*UTF8*$!' on top of file, default is false
-  #
-  # [:sort_keys] sort dict keys, default is true
-  #
-  def self.dump_ascii obj, indent_unit: "\t", initial_indent: '', wrap: true, encoding_comment: false, sort_keys: true
-    generator = AsciiGenerator.new indent_unit: indent_unit, initial_indent: initial_indent, sort_keys: sort_keys
+  def self.dump_ascii obj, indent_unit: "\t", initial_indent: '', wrap: true, encoding_comment: false, sort_keys: true, gnu_extension: true
+    generator = AsciiGenerator.new indent_unit: indent_unit, initial_indent: initial_indent, sort_keys: sort_keys, gnu_extension: gnu_extension
     generator.output << "// !$*UTF8*$!\n" if encoding_comment
     generator.generate obj, wrap
     generator.output << "\n" if wrap and obj.is_a?(Hash)
@@ -20,12 +19,13 @@ module PropertyList
   end
 
   class AsciiGenerator #:nodoc:
-    def initialize indent_unit: "\t", initial_indent: '', sort_keys: true
+    def initialize indent_unit: "\t", initial_indent: '', sort_keys: true, gnu_extension: true
       @indent_unit = indent_unit
       @indent_level = 0
       @initial_indent = initial_indent
       @indent = @initial_indent + @indent_unit * @indent_level
       @sort_keys = sort_keys
+      @gnu_extension = gnu_extension
       @output = []
     end
     attr_reader :output
@@ -52,18 +52,38 @@ module PropertyList
           ascii_hash_content object
         end
       when true
-        ascii_value "<*BY>"
-      when false
-        ascii_value "<*BN>"
-      when Float
-        if object.to_i == object
-          object = object.to_i
+        if @gnu_extension
+          ascii_value "<*BY>"
+        else
+          raise UnsupportedTypeError, 'TrueClass'
         end
-        ascii_value "<*R#{object}>"
+      when false
+        if @gnu_extension
+          ascii_value "<*BN>"
+        else
+          raise UnsupportedTypeError, 'FalseClass'
+        end
+      when Float
+        if @gnu_extension
+          if object.to_i == object
+            object = object.to_i
+          end
+          ascii_value "<*R#{object}>"
+        else
+          raise UnsupportedTypeError, 'Float'
+        end
       when Integer
-        ascii_value "<*I#{object}>"
+        if @gnu_extension
+          ascii_value "<*I#{object}>"
+        else
+          raise UnsupportedTypeError, 'Integer'
+        end
       when Time, Date # also covers DateTime
-        ascii_value "<*D#{object.strftime '%Y-%m-%d %H:%M:%S %z'}>"
+        if @gnu_extension
+          ascii_value "<*D#{object.strftime '%Y-%m-%d %H:%M:%S %z'}>"
+        else
+          raise UnsupportedTypeError, object.class.to_s
+        end
       when String
         ascii_string object
       when Symbol
@@ -73,7 +93,7 @@ module PropertyList
         contents = object.read
         ascii_data contents
       else
-        raise "Generating of this class is not supported"
+        raise UnsupportedTypeError, object.class.to_s
       end
     end
 

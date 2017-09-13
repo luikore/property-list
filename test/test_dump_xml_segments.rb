@@ -124,4 +124,10 @@ END
 
     assert_equal data, Base64.decode64(str_io_res[/(?<=\>).+(?=\<)/m])
   end
+
+  def test_unsupported_class
+    assert_raise PropertyList::UnsupportedTypeError do
+      dump_segment PropertyList::UID.new 12
+    end
+  end
 end

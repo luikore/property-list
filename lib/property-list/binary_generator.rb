@@ -1,6 +1,7 @@
 # encoding: binary
 
 module PropertyList
+  # Generate binary plist, the version is auto detected
   def self.dump_binary obj, options=nil
     generator = BinaryGenerator.new options
     generator.generate obj
@@ -11,7 +12,7 @@ module PropertyList
   #   https://github.com/jarib/plist/blob/master/lib/plist/binary.rb
   #
   # With improved performance
-  class BinaryGenerator
+  class BinaryGenerator #:nodoc:
     include BinaryMarkers
 
     def initialize opts

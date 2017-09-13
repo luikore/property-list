@@ -1,11 +1,12 @@
 module PropertyList
-  def self.load_binary(data)
+  # Parse binary plist into a Ruby object
+  def self.load_binary data
     BinaryParser.new(data).parse
   end
 
   # Reference:
   #   https://opensource.apple.com/source/CF/CF-1151.16/CFBinaryPList.c.auto.html
-  class BinaryParser
+  class BinaryParser #:nodoc:
     include BinaryMarkers
 
     def initialize src

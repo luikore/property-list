@@ -1,9 +1,10 @@
 module PropertyList
-  def self.load_ascii(data)
-    AsciiParser.new(data).parse
+  # Parse ASCII plist into a Ruby object
+  def self.load_ascii text
+    AsciiParser.new(text).parse
   end
 
-  class AsciiParser
+  class AsciiParser #:nodoc:
     def initialize src
       @lexer = StringScanner.new src.strip
     end

@@ -5,6 +5,18 @@ class TestDumpBinary < Test::Unit::TestCase
     PropertyList.load_binary PropertyList.dump_binary obj
   end
 
+  def test_dump_unicode_string
+    s = "𝄞"
+    res = dump_and_load s
+    assert_equal s, res
+  end
+
+  def test_dump_symbol
+    str_res = PropertyList.dump_binary 'foo'
+    sym_res = PropertyList.dump_binary :foo
+    assert_equal str_res, str_res
+  end
+
   def test_dump_set
     s = Set.new
     s << 3

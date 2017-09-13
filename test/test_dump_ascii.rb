@@ -29,4 +29,10 @@ foo = foo;
 END
     assert_equal expected, ascii
   end
+
+  def test_unsupported_class
+    assert_raise PropertyList::UnsupportedTypeError do
+      PropertyList.dump_ascii PropertyList::UID.new(12)
+    end
+  end
 end

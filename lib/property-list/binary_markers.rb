@@ -1,5 +1,5 @@
 module PropertyList
-  module BinaryMarkers
+  module BinaryMarkers #:nodoc:
     # These marker bytes are prefixed to objects in a binary property list to
     # indicate the type of the object.
     MARKER_NULL           = 0b0000_0000 # v1?+ only

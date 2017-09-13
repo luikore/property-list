@@ -14,22 +14,17 @@ require_relative 'property-list/binary_generator'
 require_relative 'property-list/binary_parser'
 require_relative 'property-list/version'
 
-# === Load a plist file
-#
-#   PropertyList.load_xml File.read "some_plist.xml"
-#   PropertyList.load_binary File.binread "some_binary.plist"
-#   PropertyList.load_ascii File.read "some_ascii.strings"
-#   PropertyList.load File.binread "unknown_format.plist"
-#
-# === Generate a plist file data
-#
-#   PropertyList.dump_xml obj
-#   PropertyList.dump_binary obj
-#   PropertyList.dump_ascii obj
-#
 module PropertyList
-  # load plist (binary or xml or ascii) into a ruby object
-  # auto detect the format
+  # Load plist from file
+  #
+  # Auto detects format
+  def self.load_file file_name
+    load File.binread file_name
+  end
+
+  # Load plist (binary or xml or ascii) into a ruby object.
+  #
+  # Auto detects format.
   def self.load data
     case data.byteslice(0, 8)
     when /\Abplist\d\d/n
@@ -42,6 +37,9 @@ module PropertyList
   end
 
   class SyntaxError < RuntimeError
+  end
+
+  class UnsupportedTypeError < RuntimeError
   end
 
   # binary plist v0x elements:

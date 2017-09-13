@@ -1,6 +1,6 @@
-This is a full-featured property list library which supports XML/Binary/ASCII format plists, and performance is tuned for large property list files.
-
-The code is as clean and complete as possible. There is no runtime dependency to any other gems or libplist or other libraries.
+Fully featured propertylist library.
+Can load and dump XML/ASCII/Binary plists and offer fine-grained formatting options.
+Cross platform, clean code, performance tuned, no dependency.
 
 ## Install
 
@@ -25,8 +25,9 @@ Generate a plist file data
 
 XML formatting options for `PropertyList.dump_xml object, options`
 
-- `segment:` whether wrap the xml output is a segment or wrapped with `<?xml>` and `<plist>` tags. default is `false`.
+- `segment:` whether output an XML segment (not wrapped with `<?xml>`, `<DOCTYPE>`, `<plist>` tags), default is `false`.
 - `xml_version:` you can also specify `"1.1"` for https://www.w3.org/TR/xml11/, default is `"1.0"`, no effect if `:segment` is set to `true`.
+- `gnu_dtd:` use GNUStep DTD instead (which is a bit different in string escaping), default is `false`.
 - `indent_unit:` the indent unit, default value is `"\t"`, set to or `''` if you don't need indent.
 - `initial_indent:` initial indent space, default is `''`, the indentation per line equals to `initial_indent + indent * current_indent_level`.
 - `base64_width:` the width of characters per line when serializing data with Base64, default value is `68`, must be multiple of `4`.
@@ -34,11 +35,12 @@ XML formatting options for `PropertyList.dump_xml object, options`
 
 ASCII formatting options for `PropertyList.dump_ascii object, options`
 
-- `indent_unit:` the indent unit, default value is `"\t"`, set to `''` if you don't need indent
-- `initial_indent:` initial indent space, default is `''`, the indentation per line equals to `initial_indent + indent * current_indent_level`
+- `indent_unit:` the indent unit, default value is `"\t"`, set to `''` if you don't need indent.
+- `initial_indent:` initial indent space, default is `''`, the indentation per line equals to `initial_indent + indent * current_indent_level`.
 - `wrap:` wrap the top level output with `{...}` when obj is a Hash, default is `true`.
-- `encoding_comment:` add encoding comment `// !$*UTF8*$!` on top of file, default is `false`
-- `sort_keys:` sort dict keys, default is `true`
+- `encoding_comment:` add encoding comment `// !$*UTF8*$!` on top of file, default is `false`.
+- `sort_keys:` sort dict keys, default is `true`.
+- `gnu_extension` whether allow GNUStep extensions for ASCII plist to support serializing more types, default is `true`.
 
 ## Data type mapping
 
@@ -51,7 +53,10 @@ Data type mapping in `PropertyList.load`:
     date:    DateTime
     true:    true
     false:   false
-    uid:     PropertyList::Uid # obj.uid is the integer index
+    uid:     PropertyList::UID  # only in binary plist, obj.uid is the integer index
+    array:   Array
+    dict:    Hash
+    set:     Set                # only in binary plist
 
 Reverse mapping in `PropertyList.dump_*`:
 
@@ -62,7 +67,12 @@ Reverse mapping in `PropertyList.dump_*`:
     Time, DateTime, Date: date
     true:                 true
     false:                false
-    PropertyList::Uid:    uid
+    PropertyList::Uid:    uid      # only in binary plist
+    Dict:                 dict
+    Array:                array
+    Set:                  set      # only in binary plist
+
+Type mappings in ASCII plist depends on the DTD.
 
 ## Credits
 

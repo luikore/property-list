@@ -37,6 +37,19 @@ STR
     end
   end
 
+  def test_gnu_dtd
+    string = "foo\x00"
+    actual = PropertyList.dump_xml(string, gnu_dtd: true)
+    expected = <<-STR
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//GNUstep//DTD plist 0.9//EN" "http://www.gnustep.org/plist-0_9.xml">
+<plist>
+<string>foo\\U0000</string>
+</plist>
+STR
+    assert_equal expected, actual
+  end
+
   def test_custom_indent
     hash = { :key1 => 1, 'key2' => [3] }
 
