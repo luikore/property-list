@@ -5,3 +5,11 @@ task :test do
     require f
   end
 end
+
+desc "set coverage "
+task :set_cov_env do
+  ENV['COVERAGE'] = '1'
+end
+
+desc "test and generate coverage"
+task :cov => [:set_cov_env, :test]
