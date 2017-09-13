@@ -67,3 +67,8 @@ Reverse mapping in `PropertyList.dump_*`:
 ## Credits
 
 The binary generating code is modified from https://github.com/jarib/plist with bug fixes and performance tuning.
+
+## Alternative plist libraries for Ruby
+
+- [plist](https://github.com/patsplat/plist): only deals with XML plist, and generates wrong plist when there is handle line endings in strings.
+- [CFPropertyList](https://github.com/ckruse/CFPropertyList): also deals with XML/Binary/ASCII plist files, more complex API and more thourough tests.
