@@ -6,7 +6,7 @@ module PropertyList
   #
   # [:xml_version] you can also specify <code>"1.1"</code> for https://www.w3.org/TR/xml11/, default is <code>"1.0"</code>, no effect if <code>:segment</code> is set to <code>true</code>
   #
-  # [:indent_unit] the indent unit, default value is <code>"\t"</code>, set to <code>nil</code> or <code>''</code> if you don't need indent
+  # [:indent_unit] the indent unit, default value is <code>"\t"</code>, set to <code>''</code> if you don't need indent
   #
   # [:initial_indent] initial indent space, default is <code>''</code>, the indentation per line equals to <code>initial_indent + indent * current_indent_level</code>
   #
