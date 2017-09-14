@@ -5,11 +5,7 @@ module PropertyList
   def self.dump_binary obj, options=nil
     generator = BinaryGenerator.new options
     generator.generate obj
-    if RUBY_PLATFORM == 'java' # JRuby never makes encoding right :(
-      generator.output.each {|s| s.force_encoding 'binary' }.join
-    else
-      generator.output.join
-    end
+    generator.output.join
   end
 
   # Modified from:
@@ -33,7 +29,7 @@ module PropertyList
       flatten obj
       ref_byte_size = min_byte_size @ref_size - 1
 
-      magic = "bplist00"
+      magic = "bplist00".force_encoding 'binary'
       add_output magic
       offset_table = []
       @objs.each do |o|
@@ -42,7 +38,7 @@ module PropertyList
       end
 
       if @v1
-        magic.replace 'bplist10'
+        magic.replace 'bplist10'.force_encoding 'binary'
       end
 
       offset_table_addr = @offset
@@ -52,7 +48,7 @@ module PropertyList
       end
 
       add_output [
-        "\0\0\0\0\0\0", # padding
+        "\0\0\0\0\0\0".force_encoding('binary'), # padding
         offset_byte_size, ref_byte_size,
         @ref_size,
         0, # index of root object
