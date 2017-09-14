@@ -1,4 +1,6 @@
 ![](https://travis-ci.org/luikore/property-list.svg?branch=master)
+![](https://badge.fury.io/rb/property-list)
+![](https://coveralls.io/github/luikore/property-list?branch=master)
 
 Fully featured plist library.
 Can load and dump XML/ASCII/Binary/SMIME propertylist and offer fine-grained formatting options.

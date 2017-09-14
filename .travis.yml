@@ -11,4 +11,4 @@ rvm:
   - rbx-3.72
 before_install: gem install bundler -v '~> 1.15' --conservative
 install: bundle install
-script: bundle exec rake
+script: CI_COVERAGE=1 bundle exec rake

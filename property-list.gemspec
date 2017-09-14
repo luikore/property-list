@@ -23,10 +23,4 @@ Cross platform, clean code, performance tuned, no dependency."
 
   spec.files = `git ls-files -z`.split("\x0").grep_v %r{^(test|spec|features)/}
   spec.require_paths = ["lib"]
-
-  spec.add_development_dependency "bundler", "~> 1.15"
-  spec.add_development_dependency "rake", "~> 12.0"
-  spec.add_development_dependency "test-unit", "~> 1.2"
-  spec.add_development_dependency "pry", "~> 0.10"
-  spec.add_development_dependency "simplecov", "~> 0.14"
 end
