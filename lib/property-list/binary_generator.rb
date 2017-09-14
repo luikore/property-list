@@ -17,6 +17,10 @@ module PropertyList
 
     Collection = Struct.new :marker, :size, :refs
 
+    V0_MAGIC = "bplist00".force_encoding('binary').freeze
+    V1_MAGIC = "bplist10".force_encoding('binary').freeze
+    TAIL_PADDING = "\0\0\0\0\0\0".force_encoding('binary').freeze
+
     def initialize opts
       @output = []
       @offset = 0
@@ -29,8 +33,7 @@ module PropertyList
       flatten obj
       ref_byte_size = min_byte_size @ref_size - 1
 
-      magic = "bplist00".force_encoding 'binary'
-      add_output magic
+      add_output V0_MAGIC
       offset_table = []
       @objs.each do |o|
         offset_table << @offset
@@ -38,7 +41,7 @@ module PropertyList
       end
 
       if @v1
-        magic.replace 'bplist10'.force_encoding 'binary'
+        @output[0] = V1_MAGIC
       end
 
       offset_table_addr = @offset
@@ -47,13 +50,13 @@ module PropertyList
         binary_integer offset, offset_byte_size
       end
 
-      add_output [
-        "\0\0\0\0\0\0".force_encoding('binary'), # padding
+      add_output pack([
+        TAIL_PADDING,
         offset_byte_size, ref_byte_size,
         @ref_size,
         0, # index of root object
         offset_table_addr
-      ].pack("a*C2Q>3")
+      ], "a*C2Q>3")
     end
 
     def flatten obj
@@ -116,20 +119,20 @@ module PropertyList
       when String
         binary_string obj
       when Float
-        add_output [(MARKER_REAL | 3), obj].pack("CG")
+        add_output pack([(MARKER_REAL | 3), obj], "CG")
       when Integer
         nbytes = min_byte_size obj
         size_bits = { 1 => 0, 2 => 1, 4 => 2, 8 => 3, 16 => 4 }[nbytes]
-        add_output (MARKER_INT | size_bits).chr
+        add_output chr(MARKER_INT | size_bits)
         binary_integer obj, nbytes
       when TrueClass
-        add_output MARKER_TRUE.chr
+        add_output chr(MARKER_TRUE)
       when FalseClass
-        add_output MARKER_FALSE.chr
+        add_output chr(MARKER_FALSE)
       when Time
-        add_output [MARKER_DATE, obj.to_f - TIME_INTERVAL_SINCE_1970].pack("CG")
+        add_output pack([MARKER_DATE, obj.to_f - TIME_INTERVAL_SINCE_1970], "CG")
       when Date # also covers DateTime
-        add_output [MARKER_DATE, obj.to_time.to_f - TIME_INTERVAL_SINCE_1970].pack("CG")
+        add_output pack([MARKER_DATE, obj.to_time.to_f - TIME_INTERVAL_SINCE_1970], "CG")
       when IO, StringIO
         obj.rewind
         obj.binmode
@@ -145,22 +148,22 @@ module PropertyList
         # Encoding is as integers, except values are unsigned.
         nbytes = min_byte_size obj.uid
         size_bits = { 1 => 0, 2 => 1, 4 => 2, 8 => 3, 16 => 4 }[nbytes]
-        add_output (MARKER_UID | size_bits).chr
+        add_output chr(MARKER_UID | size_bits)
         binary_integer obj.uid, nbytes
 
       ## the following are v1x data types ##
 
       when Uuid
         @v1 = true
-        data = [obj.uuid].pack 'H*'
-        add_output MARKER_UUID.chr
+        data = pack([obj.uuid], 'H*')
+        add_output chr(MARKER_UUID)
         add_output data
       when Url
         @v1 = true
         binary_url obj
       when NilClass
         @v1 = true
-        add_output MARKER_NULL.chr
+        add_output chr(MARKER_NULL)
       else
         raise UnsupportedTypeError, obj.class.to_s
       end
@@ -168,9 +171,9 @@ module PropertyList
 
     def binary_marker marker, size
       if size < 15
-        add_output (marker | size).chr
+        add_output chr(marker | size)
       else
-        add_output (marker | 0xf).chr
+        add_output chr(marker | 0xf)
         binary_object size
       end
     end
@@ -193,12 +196,20 @@ module PropertyList
 
     def binary_url obj
       if obj.url =~ /\A\w+:\/\//
-        add_output MARKER_WITH_BASE_URL.chr
+        add_output chr(MARKER_WITH_BASE_URL)
       else
-        add_output MARKER_NO_BASE_URL.chr
+        add_output chr(MARKER_NO_BASE_URL)
       end
       binary_marker MARKER_ASCII_STRING, obj.url.bytesize
       add_output obj.url
+    end
+
+    def chr c
+      c.chr.force_encoding 'binary'
+    end
+
+    def pack objs, format
+      objs.pack(format).force_encoding 'binary'
     end
 
     # Packs an integer +i+ into its binary representation in the specified
@@ -210,19 +221,19 @@ module PropertyList
       end
       case num_bytes
       when 1
-        add_output [i].pack("C")
+        add_output pack([i], "C")
       when 2
-        add_output [i].pack("n")
+        add_output pack([i], "n")
       when 4
-        add_output [i].pack("N")
+        add_output pack([i], "N")
       when 8
-        add_output [i].pack("q>")
+        add_output pack([i], "q>")
       when 16
         # TODO verify 128 bit integer encoding
         if i < 0
           i = 0xffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff ^ i.abs + 1
         end
-        add_output [i >> 64, i & 0xffff_ffff_ffff_ffff].pack("q>2")
+        add_output pack([i >> 64, i & 0xffff_ffff_ffff_ffff], "q>2")
       else
         raise ArgumentError, "num_bytes must be 1, 2, 4, 8, or 16"
       end
