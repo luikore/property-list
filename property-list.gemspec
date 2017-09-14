@@ -1,5 +1,13 @@
 require_relative 'lib/property-list/version'
 
+class Array
+  if ![].respond_to?(:grep_v)
+    def grep_v reg
+      self - grep(reg)
+    end
+  end
+end
+
 Gem::Specification.new do |spec|
   spec.name          = "property-list"
   spec.version       = PropertyList::VERSION
