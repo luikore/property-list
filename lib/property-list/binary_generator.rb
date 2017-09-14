@@ -15,109 +15,76 @@ module PropertyList
   class BinaryGenerator #:nodoc:
     include BinaryMarkers
 
+    Collection = Struct.new :marker, :size, :refs
+
     def initialize opts
       @output = []
       @offset = 0
+      @objs = []
+      @ref_size = 0
     end
     attr_reader :output
 
-    # Encodes +obj+ as a binary property list. If +obj+ is an Array, Hash, or
-    # Set, the property list includes its contents.
-    def generate object
-      flatten_objects = flatten_collection object
-      ref_byte_size = min_byte_size flatten_objects.size - 1
+    def generate obj
+      flatten obj
+      ref_byte_size = min_byte_size @ref_size - 1
 
-      # Write header and encoded objects.
-      # TODO use bplist10 when there are version 1x elements
       add_output "bplist00"
       offset_table = []
-      flatten_objects.each do |o|
+      @objs.each do |o|
         offset_table << @offset
         binary_object o, ref_byte_size
       end
 
-      # Write offset table.
       offset_table_addr = @offset
       offset_byte_size = min_byte_size @offset
       offset_table.each do |offset|
         binary_integer offset, offset_byte_size
       end
 
-      # Write trailer. (6 + 2 + 24 = 32 bytes)
       add_output [
         "\0\0\0\0\0\0", # padding
         offset_byte_size, ref_byte_size,
-        flatten_objects.size,
+        @ref_size,
         0, # index of root object
         offset_table_addr
       ].pack("a*C2Q>3")
     end
 
-    private
+    def flatten obj
+      @ref_size += 1
 
-    # Takes an object (nominally a collection, like an Array, Set, or Hash, but
-    # any object is acceptable) and flattens it into a one-dimensional array.
-    # Non-collection objects appear in the array as-is, but the contents of
-    # Arrays, Sets, and Hashes are modified like so: (1) The contents of the
-    # collection are added, one-by-one, to the one-dimensional array. (2) The
-    # collection itself is modified so that it contains indexes pointing to the
-    # objects in the one-dimensional array. Here's an example with an Array:
-    #
-    #   ary = [:a, :b, :c]
-    #   flatten_collection(ary) # => [[1, 2, 3], :a, :b, :c]
-    #
-    # In the case of a Hash, keys and values are both appended to the one-
-    # dimensional array and then replaced with indexes.
-    #
-    #   hsh = {:a => "blue", :b => "purple", :c => "green"}
-    #   flatten_collection(hsh)
-    #   # => [{1 => 2, 3 => 4, 5 => 6}, :a, "blue", :b, "purple", :c, "green"]
-    #
-    # An object will never be added to the one-dimensional array twice. If a
-    # collection refers to an object more than once, the object will be added
-    # to the one-dimensional array only once.
-    #
-    #   ary = [:a, :a, :a]
-    #   flatten_collection(ary) # => [[1, 1, 1], :a]
-    #
-    # The +obj_list+ and +id_refs+ parameters are private; they're used for
-    # descending into sub-collections recursively.
-    def flatten_collection collection, obj_list=[], id_refs={}
-      case collection
-      when Array, Set
-        if id_refs[collection.object_id]
-          return obj_list[id_refs[collection.object_id]]
+      case obj
+      when Array
+        refs = []
+        @objs << Collection[MARKER_ARRAY, obj.size, refs]
+        obj.each do |e|
+          refs << @ref_size
+          flatten e
         end
-        obj_refs = collection.class.new
-        id_refs[collection.object_id] = obj_list.length
-        obj_list << obj_refs
-        collection.each do |obj|
-          flatten_collection(obj, obj_list, id_refs)
-          obj_refs << id_refs[obj.object_id]
+
+      when Set
+        refs = []
+        @objs << Collection[MARKER_SET, obj.size, refs]
+        obj.each do |e|
+          refs << @ref_size
+          flatten e
         end
-        return obj_list
 
       when Hash
-        if id_refs[collection.object_id]
-          return obj_list[id_refs[collection.object_id]]
+        refs = []
+        @objs << Collection[MARKER_DICT, obj.size, refs]
+        obj.each do |e, _|
+          refs << @ref_size
+          flatten e
         end
-        obj_refs = {}
-        id_refs[collection.object_id] = obj_list.length
-        obj_list << obj_refs
-        collection.keys.sort.each do |key|
-          value = collection[key]
-          key = key.to_s if key.is_a?(Symbol)
-          flatten_collection(key, obj_list, id_refs)
-          flatten_collection(value, obj_list, id_refs)
-          obj_refs[id_refs[key.object_id]] = id_refs[value.object_id]
+        obj.each do |_, e|
+          refs << @ref_size
+          flatten e
         end
-        return obj_list
+
       else
-        unless id_refs[collection.object_id]
-          id_refs[collection.object_id] = obj_list.length
-          obj_list << collection
-        end
-        return obj_list
+        @objs << obj
       end
     end
 
@@ -126,32 +93,6 @@ module PropertyList
       @offset += data.bytesize
     end
 
-    # Returns a binary property list fragment that represents +obj+. The
-    # returned string is not a complete property list, just a fragment that
-    # describes +obj+, and is not useful without a header, offset table, and
-    # trailer.
-    #
-    # The following classes are recognized: String, Float, Integer, the Boolean
-    # classes, Time, IO, StringIO, Array, Set, and Hash. IO and StringIO
-    # objects are rewound, read, and the contents stored as data (i.e., Cocoa
-    # applications will decode them as NSData). All other classes are dumped
-    # with Marshal and stored as data.
-    #
-    # Note that subclasses of the supported classes will be encoded as though
-    # they were the supported superclass. Thus, a subclass of (for example)
-    # String will be encoded and decoded as a String, not as the subclass:
-    #
-    #   class ExampleString < String
-    #     ...
-    #   end
-    #
-    #   s = ExampleString.new("disquieting plantlike mystery")
-    #   encoded_s = binary_object(s)
-    #   decoded_s = decode_binary_object(encoded_s)
-    #   puts decoded_s.class # => String
-    #
-    # +ref_byte_size+ is the number of bytes to use for storing references to
-    # other objects.
     def binary_object obj, ref_byte_size = 4
       case obj
       when Symbol
@@ -181,26 +122,10 @@ module PropertyList
         data = obj.read
         binary_marker MARKER_DATA, data.bytesize
         add_output data
-      when Array
-        # Must be an array of object references as returned by flatten_collection.
-        binary_marker MARKER_ARRAY, obj.size
-        obj.each do |i|
+      when Collection
+        binary_marker obj.marker, obj.size
+        obj.refs.each do |i|
           binary_integer i, ref_byte_size
-        end
-      when Set
-        # Must be a set of object references as returned by flatten_collection.
-        binary_marker MARKER_SET, obj.size
-        obj.each do |i|
-          binary_integer i, ref_byte_size
-        end
-      when Hash
-        # Must be a table of object references as returned by flatten_collection.
-        binary_marker MARKER_DICT, obj.size
-        obj.keys.each do |k|
-          binary_integer k, ref_byte_size
-        end
-        obj.values.each do |v|
-          binary_integer v, ref_byte_size
         end
       else
         raise "Unsupported class: #{obj.class}"
