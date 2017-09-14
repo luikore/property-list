@@ -6,7 +6,7 @@ Cross platform, clean code, performance tuned, no dependency.
 
 ## Install
 
-Requires Ruby 1.9+
+Requires Ruby 2.0+
 
     gem ins property-list
 
