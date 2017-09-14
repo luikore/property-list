@@ -1,4 +1,4 @@
-
+![](https://travis-ci.org/luikore/property-list.svg?branch=master)
 
 Fully featured plist library.
 Can load and dump XML/ASCII/Binary/SMIME propertylist and offer fine-grained formatting options.

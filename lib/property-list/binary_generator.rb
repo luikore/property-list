@@ -5,7 +5,11 @@ module PropertyList
   def self.dump_binary obj, options=nil
     generator = BinaryGenerator.new options
     generator.generate obj
-    generator.output.join
+    if RUBY_PLATFORM == 'java' # JRuby never makes encoding right :(
+      generator.output.each {|s| s.force_encoding 'binary' }.join
+    else
+      generator.output.join
+    end
   end
 
   # Modified from:
