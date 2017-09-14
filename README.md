@@ -1,5 +1,7 @@
-Fully featured propertylist library.
-Can load and dump XML/ASCII/Binary plists and offer fine-grained formatting options.
+
+
+Fully featured plist library.
+Can load and dump XML/ASCII/Binary/SMIME propertylist and offer fine-grained formatting options.
 Cross platform, clean code, performance tuned, no dependency.
 
 ## Install
@@ -98,4 +100,4 @@ The binary generating code is modified from https://github.com/jarib/plist with 
 ## Alternative plist libraries for Ruby
 
 - [plist](https://github.com/patsplat/plist): only deals with XML plist, and generates wrong plist when there is handle line endings in strings.
-- [CFPropertyList](https://github.com/ckruse/CFPropertyList): also deals with XML/Binary/ASCII plist files, more complex API and more thourough tests.
+- [CFPropertyList](https://github.com/ckruse/CFPropertyList): also deals with XML/Binary/ASCII plist files, but not v1x binary plist, more hard-to-use API and more thourough tests.

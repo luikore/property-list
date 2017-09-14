@@ -1,3 +1,6 @@
+desc "default task"
+task default: :test
+
 desc "run tests"
 task :test do
   Dir.glob './test/test_*.rb' do |f|
