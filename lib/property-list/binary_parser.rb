@@ -24,36 +24,26 @@ module PropertyList
     private
 
     def decode_object offset
-      first_byte, = @src.unpack "@#{offset}C"
+      first_byte, _ = @src.unpack "@#{offset}C"
       marker = first_byte & 0xF0
       if marker == 0 or first_byte == MARKER_DATE
         marker = first_byte
       end
 
       case marker
-      when MARKER_NULL
-        nil
       when MARKER_FALSE
         false
       when MARKER_TRUE
         true
-      when MARKER_NO_BASE_URL
-        raise 'todo'
-      when MARKER_WITH_BASE_URL
-        raise 'todo'
-      when MARKER_UUID
-        raise 'todo'
-      when MARKER_FILL
-        decode_object offest + 1
       when MARKER_INT
         size_bits = first_byte & 0x0F
         num_bytes = 2 ** size_bits
         decode_integer offset + 1, num_bytes
       when MARKER_REAL
-        r, = @src.unpack "@#{offset + 1}G"
+        r, _ = @src.unpack "@#{offset + 1}G"
         r
       when MARKER_DATE
-        seconds_since_2001, = @src.unpack "@#{offset + 1}G"
+        seconds_since_2001, _ = @src.unpack "@#{offset + 1}G"
         Time.at(TIME_INTERVAL_SINCE_1970 + seconds_since_2001).to_datetime
       when MARKER_DATA
         data = @src.byteslice *(decode_vl_info offset)
@@ -64,13 +54,7 @@ module PropertyList
         str_offset, str_size = decode_vl_info offset
         s = @src.byteslice str_offset, str_size * 2
         s.force_encoding('utf-16be').encode 'utf-8'
-      when MARKER_UTF8_STRING
-        s = @src.byteslice *(decode_vl_info offset)
-        s.force_encoding 'utf-8'
       when MARKER_UID
-        # Encoding is as integers, except values are unsigned.
-        # These are used extensively in files written using NSKeyedArchiver, a serializer for Objective-C objects.
-        # The value is the index in parse_result["$objects"]
         size = (first_byte & 0xF) + 1
         bytes = @src.byteslice offset + 1, size
         res = 0
@@ -78,21 +62,13 @@ module PropertyList
           res *= 256
           res += byte
         end
-        UID[res]
+        Uid.new res
       when MARKER_ARRAY
         offset, size = decode_vl_info offset
         size.times.map do |i|
           id = decode_ref_id offset + i * @ref_byte_size
           decode_id id
         end
-      when MARKER_ORD_SET, MARKER_SET
-        r = Set.new
-        offset, size = decode_vl_info offset
-        size.times do |i|
-          id = decode_ref_id offset + i * @ref_byte_size
-          r << (decode_id id)
-        end
-        r
       when MARKER_DICT
         offset, size = decode_vl_info offset
         keys_byte_size = @ref_byte_size * size
@@ -107,18 +83,52 @@ module PropertyList
         end
         entries.sort_by! &:first
         Hash[entries]
+
+      ## the following are v1x data types ##
+
+      when MARKER_UTF8_STRING
+        s = @src.byteslice *(decode_vl_info offset)
+        s.force_encoding 'utf-8'
+      when MARKER_ORD_SET
+        r = []
+        offset, size = decode_vl_info offset
+        size.times do |i|
+          id = decode_ref_id offset + i * @ref_byte_size
+          r << (decode_id id)
+        end
+        OrdSet.new r
+      when MARKER_SET
+        r = Set.new
+        offset, size = decode_vl_info offset
+        size.times do |i|
+          id = decode_ref_id offset + i * @ref_byte_size
+          r << (decode_id id)
+        end
+        r
+      when MARKER_NULL
+        nil
+      when MARKER_NO_BASE_URL, MARKER_WITH_BASE_URL
+        # TODO check with real v1x plist
+        url = decode_object offset + 1
+        Url.new url
+      when MARKER_UUID
+        bytes = @src.byteslice offset + 1, 16
+        hex, _ = bytes.unpack 'H*'
+        Uuid.new hex.upcase
+      when MARKER_FILL
+        decode_object offest + 1
       else
         raise "unused marker: 0b#{marker.to_s(2).rjust 8, '0'}"
       end
     end
 
     def decode_vl_info offset
-      marker, = @src.unpack "@#{offset}C"
+      marker, _ = @src.unpack "@#{offset}C"
       vl_size_bits = marker & 0x0F
 
       if vl_size_bits == 0x0F
         # size is followed by marker int
-        int_marker, = @src.unpack "@#{offset + 1}C"
+        int_marker, _ = @src.unpack "@#{offset + 1}C"
         num_bytes = 2 ** (int_marker & 0x0F)
         size = decode_integer offset + 2, num_bytes
         [offset + 2 + num_bytes, size]
@@ -151,13 +161,13 @@ module PropertyList
       # NOTE: only num_bytes = 8 or 16 it can be negative
       case num_bytes
       when 1
-        i, = @src.unpack "@#{offset}C"
+        i, _ = @src.unpack "@#{offset}C"
       when 2
-        i, = @src.unpack "@#{offset}n"
+        i, _ = @src.unpack "@#{offset}n"
       when 4
-        i, = @src.unpack "@#{offset}N"
+        i, _ = @src.unpack "@#{offset}N"
       when 8
-        i, = @src.unpack "@#{offset}q>"
+        i, _ = @src.unpack "@#{offset}q>"
       when 16
         hi, lo = @src.unpack "@#{offset}q>2"
         i = (hi << 64) | lo

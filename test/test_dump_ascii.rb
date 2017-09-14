@@ -32,7 +32,33 @@ END
 
   def test_unsupported_class
     assert_raise PropertyList::UnsupportedTypeError do
-      PropertyList.dump_ascii PropertyList::UID.new(12)
+      PropertyList.dump_ascii PropertyList::Uid.new(12)
     end
+  end
+
+  def test_dump_symbol
+    res = PropertyList.dump_ascii :"foo bar"
+    assert_equal '"foo bar"', res
+  end
+
+  def test_dump_without_gnu_extension
+    assert_raise PropertyList::UnsupportedTypeError do
+      PropertyList.dump_ascii true, gnu_extension: false
+    end
+    assert_raise PropertyList::UnsupportedTypeError do
+      PropertyList.dump_ascii false, gnu_extension: false
+    end
+    assert_raise PropertyList::UnsupportedTypeError do
+      PropertyList.dump_ascii Time.now, gnu_extension: false
+    end
+    assert_raise PropertyList::UnsupportedTypeError do
+      PropertyList.dump_ascii 3, gnu_extension: false
+    end
+    assert_raise PropertyList::UnsupportedTypeError do
+      PropertyList.dump_ascii 3.5, gnu_extension: false
+    end
+
+    # no raise
+    PropertyList.dump_ascii [{foo: 'bar'}]
   end
 end

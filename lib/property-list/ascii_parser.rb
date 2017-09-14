@@ -130,18 +130,21 @@ module PropertyList
             chars << "\r"
           when 't'
             chars << "\t"
-          when 'U'
+          when 'U', 'u'
             if (hex = @lexer.scan /[0-9a-h]{4}/i)
-              chars << [hex].pack('U')
+              chars << [hex.to_i(16)].pack('U')
             else
               syntax_error "Expect 4 digit hex code"
             end
-          else
-            if (oct = @lexer.scan /[0-7]{3}/)
-              chars << [oct.to_i(8)].pack('U')
+          when /(\d)/
+            oct_init = $1
+            if (oct = @lexer.scan /[0-7]{2}/)
+              chars << [(oct_init + oct).to_i(8)].pack('U')
             else
               syntax_error "Expect 3 digit oct code"
             end
+          else
+            syntax_error "Bad escape"
           end
         else
           chars << ch
@@ -211,7 +214,7 @@ module PropertyList
     def syntax_error msg
       pre = @lexer.string[0...@lexer.pos]
       line = pre.count("\n") + 1
-      col = pre.size - pre.rindex("\n")
+      col = pre.size - (pre.rindex("\n") || -1)
       raise SyntaxError, msg + " at line: #{line} col: #{col} #{@lexer.inspect}", caller
     end
   end

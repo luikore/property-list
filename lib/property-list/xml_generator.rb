@@ -124,10 +124,6 @@ module PropertyList
       @output << "#@indent<data>\n#{base64}#@indent</data>\n"
     end
 
-    def comment_tag content
-      @output << "#@indent<!-- #{content} -->\n"
-    end
-
     def tag name, contents=nil
       if block_given?
         @output << "#@indent<#{name}>\n"

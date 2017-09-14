@@ -29,11 +29,16 @@ module PropertyList
       flatten obj
       ref_byte_size = min_byte_size @ref_size - 1
 
-      add_output "bplist00"
+      magic = "bplist00"
+      add_output magic
       offset_table = []
       @objs.each do |o|
         offset_table << @offset
         binary_object o, ref_byte_size
+      end
+
+      if @v1
+        magic.replace 'bplist10'
       end
 
       offset_table_addr = @offset
@@ -64,6 +69,7 @@ module PropertyList
         end
 
       when Set
+        @v1 = true
         refs = []
         @objs << Collection[MARKER_SET, obj.size, refs]
         obj.each do |e|
@@ -79,6 +85,16 @@ module PropertyList
           flatten e
         end
         obj.each do |_, e|
+          refs << @ref_size
+          flatten e
+        end
+
+      when OrdSet
+        @v1 = true
+        refs = []
+        elements = obj.elements
+        @objs << Collection[MARKER_ORD_SET, elements.size, refs]
+        elements.each do |e|
           refs << @ref_size
           flatten e
         end
@@ -99,8 +115,6 @@ module PropertyList
         binary_string obj.to_s
       when String
         binary_string obj
-      when URL
-        binary_url obj.url
       when Float
         add_output [(MARKER_REAL | 3), obj].pack("CG")
       when Integer
@@ -127,8 +141,28 @@ module PropertyList
         obj.refs.each do |i|
           binary_integer i, ref_byte_size
         end
+      when Uid
+        # Encoding is as integers, except values are unsigned.
+        nbytes = min_byte_size obj.uid
+        size_bits = { 1 => 0, 2 => 1, 4 => 2, 8 => 3, 16 => 4 }[nbytes]
+        add_output (MARKER_UID | size_bits).chr
+        binary_integer obj.uid, nbytes
+
+      ## the following are v1x data types ##
+
+      when Uuid
+        @v1 = true
+        data = [obj.uuid].pack 'H*'
+        add_output MARKER_UUID.chr
+        add_output data
+      when Url
+        @v1 = true
+        binary_url obj
+      when NilClass
+        @v1 = true
+        add_output MARKER_NULL.chr
       else
-        raise "Unsupported class: #{obj.class}"
+        raise UnsupportedTypeError, obj.class.to_s
       end
     end
 
@@ -158,22 +192,13 @@ module PropertyList
     end
 
     def binary_url obj
-      @v1 = true
-      if obj =~ /\A\w+:/
+      if obj.url =~ /\A\w+:\/\//
         add_output MARKER_WITH_BASE_URL.chr
       else
         add_output MARKER_NO_BASE_URL.chr
       end
-      binary_marker MARKER_ASCII_STRING, obj.bytesize
-      add_output obj
-    end
-
-    def binary_uuid obj
-      # TODO
-    end
-
-    def binary_ordered_set obj
-      # TODO
+      binary_marker MARKER_ASCII_STRING, obj.url.bytesize
+      add_output obj.url
     end
 
     # Packs an integer +i+ into its binary representation in the specified

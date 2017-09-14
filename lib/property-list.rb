@@ -44,38 +44,69 @@ module PropertyList
 
   # binary plist v0x elements:
 
-  class UID
+  # These are used extensively in files written using NSKeyedArchiver, a serializer for Objective-C objects.
+  # The value is the index in parse_result["$objects"]
+  #
+  # call-seq:
+  #
+  #     PropertyList::Uid.new 34
+  class Uid
     def initialize uid
       @uid = uid
     end
+
     attr_reader :uid
+
+    def == other
+      other.is_a?(Uid) and @uid == other.uid
+    end
   end
 
   # binary plist v1x elements:
 
-  class URL
+  # call-seq:
+  #
+  #     PropertyList::Url.new 'http://foo.com' # with base
+  #     PropertyList::Url.new '/foo.com'       # no base
+  class Url
     def initialize url
       @url = url
     end
+
     attr_reader :url
+
+    def == other
+      other.is_a?(Url) and @url == other.url
+    end
   end
 
-  class UUID
+  # call-seq:
+  #
+  #     PropertyList::Uuid.new 'F' * 32
+  class Uuid
     def initialize uuid
       @uuid = uuid
     end
+
     attr_reader :uuid
+
+    def == other
+      other.is_a?(Uuid) and @uuid == other.uuid
+    end
   end
 
-  class OrderedSet
+  # call-seq:
+  #
+  #     PropertyList::OrdSet.new ['foo', 'bar', 3, 4]
+  class OrdSet
     def initialize elements
       @elements = elements.uniq
     end
 
-    def each
-      @elements.each do |e|
-        yield e
-      end
+    attr_reader :elements
+
+    def == other
+      other.is_a?(OrdSet) and @elements == other.elements
     end
   end
 end

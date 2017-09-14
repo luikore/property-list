@@ -1,6 +1,16 @@
 require_relative 'helper'
 
 class TestDumpXmlSegments < Test::Unit::TestCase
+  class CommentTag
+    def initialize content
+      @content = content
+    end
+
+    def to_plist_xml
+      "<!-- #{@content} -->"
+    end
+  end
+
   def tag type, content
     return "<#{type}>#{content}</#{type}>\n"
   end
@@ -127,7 +137,12 @@ END
 
   def test_unsupported_class
     assert_raise PropertyList::UnsupportedTypeError do
-      dump_segment PropertyList::UID.new 12
+      dump_segment PropertyList::Uid.new 12
     end
+  end
+
+  def test_custom_element
+    comment = dump_segment CommentTag.new 'a comment'
+    assert_equal "<!-- a comment -->\n", comment
   end
 end

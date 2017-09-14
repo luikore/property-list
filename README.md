@@ -23,7 +23,7 @@ Generate a plist file data
     PropertyList.dump_binary obj
     PropertyList.dump_ascii obj
 
-XML formatting options for `PropertyList.dump_xml object, options`
+**XML formatting** options for `PropertyList.dump_xml object, options`
 
 - `segment:` whether output an XML segment (not wrapped with `<?xml>`, `<DOCTYPE>`, `<plist>` tags), default is `false`.
 - `xml_version:` you can also specify `"1.1"` for https://www.w3.org/TR/xml11/, default is `"1.0"`, no effect if `:segment` is set to `true`.
@@ -33,7 +33,7 @@ XML formatting options for `PropertyList.dump_xml object, options`
 - `base64_width:` the width of characters per line when serializing data with Base64, default value is `68`, must be multiple of `4`.
 - `base64_indent:` whether indent the Base64 encoded data, you can use `false` for compatibility to generate same output for other frameworks, default value is `true`.
 
-ASCII formatting options for `PropertyList.dump_ascii object, options`
+**ASCII formatting** options for `PropertyList.dump_ascii object, options`
 
 - `indent_unit:` the indent unit, default value is `"\t"`, set to `''` if you don't need indent.
 - `initial_indent:` initial indent space, default is `''`, the indentation per line equals to `initial_indent + indent * current_indent_level`.
@@ -44,33 +44,50 @@ ASCII formatting options for `PropertyList.dump_ascii object, options`
 
 ## Data type mapping
 
-Data type mapping in `PropertyList.load`:
+When loading, plist data types will be mapped to native Ruby types:
 
-    real:    Float
-    string:  String
-    integer: Integer
-    data:    StringIO
-    date:    DateTime
-    true:    true
-    false:   false
-    uid:     PropertyList::UID  # only in binary plist, obj.uid is the integer index
-    array:   Array
-    dict:    Hash
-    set:     Set                # only in binary plist
+    real:        Float
+    string:      String
+    integer:     Integer
+    data:        StringIO
+    date:        DateTime
+    true:        true
+    false:       false
+    uid:         PropertyList::UID  # only in binary plist, obj.uid is the integer index
+    array:       Array
+    dict:        Hash
 
-Reverse mapping in `PropertyList.dump_*`:
+    # binary plist v1x elements:
+    null:        NilClass
+    set:         Set
+    ordset:      PropertyList::OrdSet
+    uuid:        PropertyList::Uuid
+    url_base:    PropertyList::Url # start with \w+://
+    url_no_base: PropertyList::Url
+
+When dumping, native Ruby types will be mapped to plist data types:
 
     Float:                real
     String, Symbol:       string
     Integer:              integer
-    StringIO, IO:         data
-    Time, DateTime, Date: date
+    StringIO:             data
+    IO:                   data
+    Time:                 date
+    DateTime:             date
+    Date:                 date
     true:                 true
     false:                false
     PropertyList::Uid:    uid      # only in binary plist
     Dict:                 dict
     Array:                array
     Set:                  set      # only in binary plist
+
+    # binary plist v1x elements:
+    NilClass:             null
+    Set:                  set
+    PropertyList::OrdSet: ordset
+    PropertyList::Uuid:   uuid
+    PropertyList::Url:    url_base, url_no_base
 
 Type mappings in ASCII plist depends on the DTD.
 

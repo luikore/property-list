@@ -14,4 +14,14 @@ class TestLoadXml < Test::Unit::TestCase
     assert_nil PropertyList.load_xml(File.read 'test/fixtures/commented.xml')
     assert_nil PropertyList.load_xml(File.read 'test/fixtures/empty.xml')
   end
+
+  def test_syntax_error
+    assert_raises PropertyList::SyntaxError do
+      PropertyList.load_xml "<plist><string>341</integer></plist>"
+    end
+  end
+
+  def test_load_empty_dict
+    assert_equal ({}), PropertyList.load_xml('<dict />')
+  end
 end

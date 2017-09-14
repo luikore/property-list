@@ -22,7 +22,6 @@ module PropertyList
       # TODO xml_encoding = xml_declaration.match(/(?:\A|\s)encoding=(?:"(.*?)"|'(.*?)')(?:\s|\Z)/)
 
       skip_space_and_comments
-      # TODO doctype should co-exist with xml
       @lexer.skip(/\s*<!DOCTYPE\s+.*?>/m)
       skip_space_and_comments
 
@@ -115,7 +114,7 @@ module PropertyList
     def syntax_error msg
       pre = @lexer.string[0...@lexer.pos]
       line = pre.count("\n") + 1
-      col = pre.size - pre.rindex("\n")
+      col = pre.size - (pre.rindex("\n") || -1)
       raise SyntaxError, msg + " at line: #{line} col: #{col} #{@lexer.inspect}", caller
     end
   end
