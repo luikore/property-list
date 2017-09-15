@@ -5,6 +5,7 @@ module PropertyList
   def self.dump_binary obj, options=nil
     generator = BinaryGenerator.new options
     generator.generate obj
+    binding.pry if $test
     generator.output.join
   end
 
@@ -133,7 +134,11 @@ module PropertyList
         add_output pack([MARKER_DATE, obj.to_f - TIME_INTERVAL_SINCE_1970], "CG")
       when Date # also covers DateTime
         add_output pack([MARKER_DATE, obj.to_time.to_f - TIME_INTERVAL_SINCE_1970], "CG")
-      when IO, StringIO
+      when StringIO
+        data = obj.string.force_encoding('binary') # NOTE StringIO.binmode doesn't work in <2.0.0 & rbx
+        binary_marker MARKER_DATA, data.bytesize
+        add_output data
+      when IO
         obj.rewind
         obj.binmode
         data = obj.read

@@ -116,6 +116,9 @@ class TestDumpBinary < Test::Unit::TestCase
     data = StringIO.new "\x00\xFE"
     PropertyList.dump_binary [data, true]
     PropertyList.dump_binary ['なに', 1.0]
+    File.open 'test/fixtures/finder.binary', 'rb' do |f|
+      PropertyList.dump_binary [f, 1.0, '要不然']
+    end
 
     binary_encoded_string = 'なに'.force_encoding 'binary'
     utf8_encoded_string = 'utf-8 encoded string'.force_encoding 'utf-8'
