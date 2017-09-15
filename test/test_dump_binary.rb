@@ -111,4 +111,14 @@ class TestDumpBinary < Test::Unit::TestCase
     res = dump_and_load(t).to_time
     assert_equal t, res
   end
+
+  def test_no_encoding_error_in_mixed_dumping
+    data = StringIO.new "\x00\xFE"
+    PropertyList.dump_binary [data, true]
+    PropertyList.dump_binary ['なに', 1.0]
+
+    binary_encoded_string = 'なに'.force_encoding 'binary'
+    utf8_encoded_string = 'utf-8 encoded string'.force_encoding 'utf-8'
+    PropertyList.dump_binary [binary_encoded_string, utf8_encoded_string, false, data, :foo, 123.12]
+  end
 end

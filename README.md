@@ -1,4 +1,4 @@
-[![Travis CI](https://travis-ci.org/luikore/property-list)](https://travis-ci.org/luikore/property-list.svg?branch=master)
+[![Build Status](https://travis-ci.org/luikore/property-list.svg?branch=master)](https://travis-ci.org/luikore/property-list)
 [![Gem Version](https://badge.fury.io/rb/property-list.svg)](https://badge.fury.io/rb/property-list)
 [![Coverage Status](https://coveralls.io/repos/github/luikore/property-list/badge.svg?branch=master)](https://coveralls.io/github/luikore/property-list?branch=master)
 
