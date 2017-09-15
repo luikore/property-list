@@ -4,7 +4,7 @@ module PropertyList
   #
   # Options:
   #
-  # - `segment:` whether output an XML segment (not wrapped with `<?xml>`, `<DOCTYPE>`, `<plist>` tags), default is `false`.
+  # - `segment:` whether output an XML segment (not wrapped with `<?xml>, <DOCTYPE>, <plist>` tags), default is `false`.
   # - `xml_version:` you can also specify `"1.1"` for https://www.w3.org/TR/xml11/, default is `"1.0"`, no effect if `:segment` is set to `true`.
   # - `gnu_dtd:` use GNUStep DTD instead (which is a bit different in string escaping), default is `false`.
   # - `indent_unit:` the indent unit, default value is `"\t"`, set to or `''` if you don't need indent.
