@@ -46,6 +46,11 @@ Generate a plist file data
 - `sort_keys:` sort dict keys, default is `true`.
 - `gnu_extension:` whether allow GNUStep extensions for ASCII plist to support serializing more types, default is `true`.
 
+Also a helper method to help getting plist from SMIME envelope:
+
+    data = File.binread 'foo.mobileprovision'
+    plist = PropertyList.load PropertyList.data_from_smime data
+
 ## Data type mapping
 
 When loading, plist data types will be mapped to native Ruby types:

@@ -36,6 +36,16 @@ module PropertyList
     end
   end
 
+  # Util method for extracting data from smime/mobileprovision envelope. Example:
+  #
+  #     data = File.binread 'foo.mobileprovision'
+  #     plist = PropertyList.load PropertyList.data_from_smime data
+  def self.data_from_smime data
+    require 'openssl'
+    asn1 = OpenSSL::ASN1.decode data
+    asn1.value[1].value[0].value[2].value[1].value.first.value
+  end
+
   class SyntaxError < RuntimeError
   end
 
